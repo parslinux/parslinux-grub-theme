@@ -1,0 +1,13 @@
+Source: pardus-bilge-grub-theme
+Section: utils
+Priority: optional
+Maintainer: Pardus Dev <dev@pardus.org.tr>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.1
+Homepage: https://github.com/pardus/pardus-bilge-grub-theme
+
+Package: pardus-bilge-grub-theme
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Pardus Bilge Grub Theme
+ A grub theme prepared for Pardus operating system.
