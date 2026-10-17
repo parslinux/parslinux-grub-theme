@@ -1,13 +1,17 @@
-Source: pardus-bilge-grub-theme
+Source: parslinux-grub-theme
 Section: utils
 Priority: optional
-Maintainer: Pardus Dev <dev@pardus.org.tr>
+Maintainer: ParsLinux Dev Team <dev@parslinux.org>
 Build-Depends: debhelper-compat (= 13)
-Standards-Version: 4.6.1
-Homepage: https://github.com/pardus/pardus-bilge-grub-theme
+Standards-Version: 4.6.2
+Homepage: https://github.com/parslinux/parslinux-grub-theme
 
-Package: pardus-bilge-grub-theme
+Package: parslinux-grub-theme
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Pardus Bilge Grub Theme
- A grub theme prepared for Pardus operating system.
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64
+Provides: grub-theme
+Description: ParsLinux GRUB Theme
+ A modern, sleek and elegant GRUB bootloader theme featuring the
+ ParsLinux Anatolian leopard branding, high-contrast dark aesthetic,
+ and comprehensive operating system icons.

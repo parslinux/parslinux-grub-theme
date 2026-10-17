@@ -1,0 +1,9 @@
+build/
+*.deb
+*.buildinfo
+*.changes
+*.tar.gz
+*.tar.xz
+*.dsc
+.DS_Store
+*~

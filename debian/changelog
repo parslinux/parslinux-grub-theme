@@ -1,5 +1,9 @@
-pardus-bilge-grub-theme (0.1.0) unstable; urgency=medium
+parslinux-grub-theme (1.0.0) unstable; urgency=medium
 
-  * Initial release.
+  * Initial release for ParsLinux.
+  * Forked from pardus-bilge-grub-theme.
+  * Added high-resolution 1920x1080 dark luxury wallpaper with ParsLinux branding.
+  * Added complete suite of OS icons (ParsLinux, Debian, Arch, Windows, etc.).
+  * Added polished selection and progress bar styles.
 
- -- Yusuf Düzgün <yusuf.duzgun@pardus.org.tr>  Fri, 10 Oct 2025 15:21:45 +0300
+ -- ParsLinux Dev Team <dev@parslinux.org>  Sat, 17 Oct 2026 16:40:00 +0300

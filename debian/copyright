@@ -1,11 +1,10 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: pardus-bilge-grub-theme
-Source: https://github.com/pardus/pardus-bilge-grub-theme
-
-
+Upstream-Name: parslinux-grub-theme
+Source: https://github.com/parslinux/parslinux-grub-theme
 
 Files: *
-Copyright: 2025 Pardus Dev <dev@pardus.org.tr>
+Copyright: 2026 ParsLinux Dev Team <dev@parslinux.org>
+           2025 Pardus Dev <dev@pardus.org.tr>
 License: GPL-3.0+
 
 License: GPL-3.0+
