@@ -1,54 +1,124 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ==============================================================================
-#  ParsLinux GRUB Teması Paketleme Betiği
+#  ParsLinux GRUB Teması — Paketleme Betiği (package.sh)
+#  Telif Hakkı (C) 2026 ParsLinux Geliştirici Ekibi <dev@parslinux.org>
+# ==============================================================================
+# Bu betik parslinux-grub-theme için Debian (.deb) ve evrensel (.tar.gz)
+# paketlerini otomatik olarak oluşturur.
 # ==============================================================================
 
 set -e
 
+# Renk tanımları
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BOLD='\033[1m'
+NC='\033[0m'
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-echo "🐆 ParsLinux GRUB Teması Paketi Hazırlanıyor..."
-mkdir -p build
+echo -e "${CYAN}${BOLD}"
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║       📦 ParsLinux GRUB Teması — Paketleme Aracı             ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
 
-if command -v dpkg-buildpackage >/dev/null 2>&1; then
+PKG_NAME="parslinux-grub-theme"
+VERSION=$(head -n 1 debian/changelog | awk -F '[()]' '{print $2}')
+[ -z "$VERSION" ] && VERSION="1.0.0"
+ARCH="all"
+OUTPUT_DIR="${SCRIPT_DIR}/build"
+
+echo -e "${BOLD}Paket Adı    :${NC} ${CYAN}${PKG_NAME}${NC}"
+echo -e "${BOLD}Sürüm        :${NC} ${CYAN}${VERSION}${NC}"
+echo -e "${BOLD}Mimari       :${NC} ${CYAN}${ARCH}${NC}"
+echo -e "${BOLD}Çıktı Dizini :${NC} ${CYAN}${OUTPUT_DIR}${NC}\n"
+
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
+
+# 1. Debian Paketi Oluşturma
+echo -e "${BOLD}[1/2] Debian (.deb) Paketi Oluşturuluyor...${NC}"
+
+if command -v dpkg-buildpackage &>/dev/null; then
+    echo -e "  ${CYAN}dpkg-buildpackage ile tam Debian inşası başlatılıyor...${NC}"
     dpkg-buildpackage -us -uc -b
-    mv ../parslinux-grub-theme_* build/ 2>/dev/null || true
-    echo "✓ Paket başarıyla build/ içerisine inşa edildi."
+    mv ../${PKG_NAME}_* "${OUTPUT_DIR}/" 2>/dev/null || true
+    echo -e "  ${GREEN}✓${NC} dpkg-buildpackage ile paket inşa edildi."
 else
-    PKG_NAME="parslinux-grub-theme"
-    PKG_VER="1.0.0"
-    PKG_DIR="build/${PKG_NAME}_${PKG_VER}_all"
-    rm -rf "${PKG_DIR}"
-    mkdir -p "${PKG_DIR}/DEBIAN"
-    mkdir -p "${PKG_DIR}/usr/share/grub/themes"
-    mkdir -p "${PKG_DIR}/boot/grub/themes"
+    # Evrensel deb oluşturma (dpkg-deb veya ar+tar ile her sistemde çalışır)
+    STAGE_DIR="${OUTPUT_DIR}/${PKG_NAME}_${VERSION}_${ARCH}"
+    mkdir -p "${STAGE_DIR}/DEBIAN"
+    mkdir -p "${STAGE_DIR}/usr/share/grub/themes"
+    mkdir -p "${STAGE_DIR}/boot/grub/themes"
 
-    cp -r parslinux "${PKG_DIR}/usr/share/grub/themes/"
-    cp -r parslinux "${PKG_DIR}/boot/grub/themes/"
+    # Tema dosyalarını kopyala
+    cp -r parslinux "${STAGE_DIR}/usr/share/grub/themes/"
+    cp -r parslinux "${STAGE_DIR}/boot/grub/themes/"
 
-    cp debian/postinst "${PKG_DIR}/DEBIAN/postinst"
-    cp debian/postrm "${PKG_DIR}/DEBIAN/postrm"
-    chmod 755 "${PKG_DIR}/DEBIAN/postinst" "${PKG_DIR}/DEBIAN/postrm"
+    # Bakımcı betiklerini hazırla
+    cp debian/postinst "${STAGE_DIR}/DEBIAN/postinst"
+    cp debian/postrm "${STAGE_DIR}/DEBIAN/postrm"
+    chmod 755 "${STAGE_DIR}/DEBIAN/postinst" "${STAGE_DIR}/DEBIAN/postrm"
 
-    cat <<EOF > "${PKG_DIR}/DEBIAN/control"
+    # Control dosyasını hazırla
+    cat <<EOF > "${STAGE_DIR}/DEBIAN/control"
 Package: ${PKG_NAME}
-Version: ${PKG_VER}
+Version: ${VERSION}
 Section: utils
 Priority: optional
-Architecture: all
+Architecture: ${ARCH}
 Maintainer: ParsLinux Dev Team <dev@parslinux.org>
 Depends: grub2-common
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub-efi-arm64
+Provides: grub-theme
 Description: ParsLinux GRUB Theme
  A modern, sleek and elegant GRUB bootloader theme featuring the
  ParsLinux Anatolian leopard branding, high-contrast dark aesthetic,
  and comprehensive operating system icons.
 EOF
 
-    if command -v dpkg-deb >/dev/null 2>&1; then
-        dpkg-deb --build "${PKG_DIR}" "build/${PKG_NAME}_${PKG_VER}_all.deb"
-        echo "✓ Paket oluşturuldu: build/${PKG_NAME}_${PKG_VER}_all.deb"
-    else
-        echo "✓ Paket ağacı hazırlandı: ${PKG_DIR}"
+    DEB_FILE="${OUTPUT_DIR}/${PKG_NAME}_${VERSION}_${ARCH}.deb"
+
+    if command -v dpkg-deb &>/dev/null; then
+        echo -e "  ${CYAN}dpkg-deb aracı ile paketleniyor...${NC}"
+        dpkg-deb --build "${STAGE_DIR}" "${DEB_FILE}" >/dev/null
+    elif command -v ar &>/dev/null && command -v tar &>/dev/null; then
+        echo -e "  ${CYAN}Sistem 'ar' ve 'tar' araçları ile evrensel .deb derleniyor...${NC}"
+        WORK_TEMP=$(mktemp -d)
+        echo "2.0" > "${WORK_TEMP}/debian-binary"
+
+        # control.tar.gz
+        (cd "${STAGE_DIR}/DEBIAN" && tar --owner=root:0 --group=root:0 -czf "${WORK_TEMP}/control.tar.gz" .)
+
+        # data.tar.gz
+        (cd "${STAGE_DIR}" && tar --exclude='./DEBIAN' --owner=root:0 --group=root:0 -czf "${WORK_TEMP}/data.tar.gz" ./usr ./boot)
+
+        # ar ile .deb birleştir
+        (cd "${WORK_TEMP}" && ar rcs "${DEB_FILE}" debian-binary control.tar.gz data.tar.gz)
+        rm -rf "${WORK_TEMP}"
     fi
+
+    rm -rf "${STAGE_DIR}"
+    echo -e "  ${GREEN}✓${NC} Debian paketi oluşturuldu: $(basename "${DEB_FILE}")"
 fi
+
+# 2. Bağımsız Kaynak / Yayın Arşivi Oluşturma (.tar.gz)
+echo -e "\n${BOLD}[2/2] Evrensel Kaynak / Dağıtım Arşivi (.tar.gz) Oluşturuluyor...${NC}"
+TAR_NAME="${PKG_NAME}-${VERSION}.tar.gz"
+tar --exclude='./build' --exclude='./.git' -czf "${OUTPUT_DIR}/${TAR_NAME}" \
+    parslinux install.sh uninstall.sh run.sh package.sh Makefile README.md debian
+
+echo -e "  ${GREEN}✓${NC} Evrensel arşiv oluşturuldu: ${TAR_NAME}"
+
+# Çıktı Özeti
+echo -e "\n${GREEN}${BOLD}╔══════════════════════════════════════════════════════════════╗"
+echo "║             🎉 Paketleme İşlemi Başarıyla Tamamlandı!        ║"
+echo "╚══════════════════════════════════════════════════════════════╝${NC}\n"
+
+echo -e "${BOLD}Oluşturulan Paketler:${NC}"
+ls -lh "${OUTPUT_DIR}"/*.deb "${OUTPUT_DIR}"/*.tar.gz 2>/dev/null | awk '{printf "  %s  %s (%s)\n", "'"${CYAN}"'•'"${NC}"'", $9, $5}'
+echo ""
