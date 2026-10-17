@@ -21,7 +21,9 @@ Bilgisayar açılırken klasik siyah ve metin tabanlı GRUB ekranı yerine, Pars
 
 ---
 
-## 📸 Ekran Düzeni
+## 📸 Ekran Önizlemesi
+
+![ParsLinux GRUB Teması Önizleme](screenshots/preview.png)
 
 ```text
 +--------------------------------------------------------------------------+

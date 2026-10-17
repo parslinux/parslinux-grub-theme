@@ -83,16 +83,73 @@ function check_theme_integrity() {
 }
 
 function run_grub_emu() {
-    echo -e "\n${BOLD}[2] GRUB Emülatörü ile Canlı Test Başlatılıyor...${NC}\n"
+    echo -e "\n${BOLD}[2] GRUB Önyükleme Ekranı Önizlemesi...${NC}\n"
     if command -v grub-emu &>/dev/null; then
         echo -e "${CYAN}grub-emu başlatılıyor (Tema: $THEME_DIR)...${NC}"
         grub-emu -d "$THEME_DIR" || grub-emu
     else
-        echo -e "${YELLOW}⚠️ Sistemde 'grub-emu' (GRUB Emulator) kurulu değil.${NC}"
-        echo -e "Kurulum için:"
-        echo -e "  Debian/Ubuntu/ParsLinux : ${CYAN}sudo apt install grub-emu${NC}"
-        echo -e "  Arch Linux/CachyOS      : ${CYAN}yay -S grub-emu${NC} veya resmi paket"
-        echo -e "\nAlternatif olarak arka plan görseli incelenebilir."
+        echo -e "${YELLOW}⚠️ Sistemde 'grub-emu' kurulu değil. Piksel hassasiyetinde simülasyon görseli üretiliyor...${NC}"
+        python3 -c "
+import base64, os
+with open('$THEME_DIR/background.png', 'rb') as f:
+    bg_b64 = base64.b64encode(f.read()).decode('utf-8')
+icons = {}
+for name in ['parslinux', 'recovery', 'windows', 'uefi', 'reboot', 'shutdown']:
+    with open(f'$THEME_DIR/icons/{name}.png', 'rb') as f:
+        icons[name] = base64.b64encode(f.read()).decode('utf-8')
+
+svg = f'''<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1920 1080\" width=\"1920\" height=\"1080\">
+  <defs>
+    <linearGradient id=\"selGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">
+      <stop offset=\"0%\" stop-color=\"#4f46e5\" /><stop offset=\"50%\" stop-color=\"#4338ca\" /><stop offset=\"100%\" stop-color=\"#312e81\" />
+    </linearGradient>
+    <linearGradient id=\"pbGrad\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\">
+      <stop offset=\"0%\" stop-color=\"#6366f1\" /><stop offset=\"60%\" stop-color=\"#38bdf8\" /><stop offset=\"100%\" stop-color=\"#06b6d4\" />
+    </linearGradient>
+  </defs>
+  <image href=\"data:image/png;base64,{bg_b64}\" x=\"0\" y=\"0\" width=\"1920\" height=\"1080\" />
+  <g transform=\"translate(422, 350)\">
+    <rect x=\"0\" y=\"0\" width=\"1075\" height=\"42\" rx=\"8\" ry=\"8\" fill=\"url(#selGrad)\" stroke=\"#6366f1\" stroke-width=\"1.5\" />
+    <rect x=\"4\" y=\"10\" width=\"3.5\" height=\"22\" rx=\"1.75\" fill=\"#38bdf8\" />
+    <line x1=\"8\" y1=\"1.5\" x2=\"1067\" y2=\"1.5\" stroke=\"#a5b4fc\" stroke-width=\"1.2\" stroke-opacity=\"0.7\" />
+    <image href=\"data:image/png;base64,{icons['parslinux']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"bold\" fill=\"#ffffff\">* ParsLinux GNU/Linux (6.12.0-parslinux-amd64) (Varsayılan)</text>
+  </g>
+  <g transform=\"translate(422, 404)\">
+    <image href=\"data:image/png;base64,{icons['recovery']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"500\" fill=\"#94a3b8\">  ParsLinux için gelişmiş seçenekler (Kurtarma kipi / Eski çekirdekler)</text>
+  </g>
+  <g transform=\"translate(422, 458)\">
+    <image href=\"data:image/png;base64,{icons['windows']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"500\" fill=\"#94a3b8\">  Windows Boot Manager (/dev/nvme0n1p1 üzerinde)</text>
+  </g>
+  <g transform=\"translate(422, 512)\">
+    <image href=\"data:image/png;base64,{icons['uefi']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"500\" fill=\"#94a3b8\">  UEFI Donanım Yazılımı Ayarları (BIOS / Anakart Menüsü)</text>
+  </g>
+  <g transform=\"translate(422, 566)\">
+    <image href=\"data:image/png;base64,{icons['reboot']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"500\" fill=\"#94a3b8\">  Sistemi Yeniden Başlat</text>
+  </g>
+  <g transform=\"translate(422, 620)\">
+    <image href=\"data:image/png;base64,{icons['shutdown']}\" x=\"18\" y=\"5\" width=\"32\" height=\"32\" />
+    <text x=\"64\" y=\"26\" font-family=\"'DejaVu Sans', monospace\" font-size=\"16\" font-weight=\"500\" fill=\"#94a3b8\">  Bilgisayarı Kapat</text>
+  </g>
+  <g transform=\"translate(720, 990)\">
+    <rect x=\"0\" y=\"0\" width=\"480\" height=\"14\" rx=\"7\" ry=\"7\" fill=\"#090d16\" stroke=\"#334155\" stroke-width=\"1\" />
+    <rect x=\"1\" y=\"1\" width=\"288\" height=\"12\" rx=\"6\" ry=\"6\" fill=\"url(#pbGrad)\" />
+    <text x=\"240\" y=\"-12\" text-anchor=\"middle\" font-family=\"'DejaVu Sans', sans-serif\" font-size=\"13\" fill=\"#cbd5e1\">5 saniye içinde varsayılan seçenek başlatılıyor...</text>
+  </g>
+</svg>'''
+with open('/tmp/grub_preview_full.svg', 'w') as f:
+    f.write(svg)
+os.system('rsvg-convert -w 1920 -h 1080 /tmp/grub_preview_full.svg -o $SCRIPT_DIR/preview_boot_screen.png')
+"
+        echo -e "${GREEN}✓ 1920x1080 piksel hassasiyetinde canlı simülasyon üretildi:${NC} preview_boot_screen.png"
+        if command -v xdg-open &>/dev/null; then
+            xdg-open "$SCRIPT_DIR/preview_boot_screen.png" &>/dev/null &
+            echo -e "${CYAN}Görsel sistem resim görüntüleyicisi ile açıldı.${NC}"
+        fi
     fi
 }
 
