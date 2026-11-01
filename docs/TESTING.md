@@ -31,6 +31,7 @@ Simülatör açıldığında:
 
 Tam önyükleme döngüsünü test etmek için:
 
+
 ```bash
 # Geçici bir EFI test diskiyle QEMU başlatma
 qemu-system-x86_64 -enable-kvm -m 2048 -vga std \
